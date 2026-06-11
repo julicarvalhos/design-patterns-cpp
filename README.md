@@ -156,4 +156,66 @@ Current text: ""
 
 ## 3. Decorator — Structural
 
-*Coming soon.*
+> Reference: https://refactoring.guru/design-patterns/decorator
+
+### Context
+
+A notification system needs to send alerts through multiple channels: Email, SMS, Slack, and a logging layer. Users may want any combination of these channels active at the same time.
+
+### Problem
+
+Using inheritance to cover every combination (EmailSMS, EmailSlack, EmailSMSSlack, etc.) leads to a class explosion. Every new channel requires updating all existing combinations, making the code impossible to maintain.
+
+### Solution
+
+The Decorator pattern wraps a base `Notifier` object with additional behavior at runtime. Each decorator (`SMSDecorator`, `SlackDecorator`, `LoggerDecorator`) holds a reference to a `Notifier` and calls it before or after adding its own behavior. Decorators can be stacked in any order and combination without changing the original class.
+
+### Code Explanation
+
+```
+Notifier                    (component interface)
+└── EmailNotifier           (concrete component — base behavior)
+
+NotifierDecorator           (base decorator — wraps a Notifier)
+├── SMSDecorator            → adds SMS notification
+├── SlackDecorator          → adds Slack notification
+└── LoggerDecorator         → adds logging before and after sending
+```
+
+- **`Notifier`** — component interface declaring `send()`.
+- **`EmailNotifier`** — the concrete base component; sends email notifications.
+- **`NotifierDecorator`** — abstract base decorator that holds a reference to a `Notifier` and delegates `send()` to it.
+- **`SMSDecorator`, `SlackDecorator`, `LoggerDecorator`** — concrete decorators that call the wrapped notifier's `send()` and add their own behavior.
+- **Client code** — stacks decorators freely at runtime, with no knowledge of which concrete combination is being used.
+
+### How to run
+
+```bash
+g++ -o decorator structural/decorator/decorator.cpp
+./decorator
+```
+
+### Expected output
+
+```
+=== Decorator Pattern Demo ===
+
+-- Email only --
+[Email] To: alice@example.com | Message: Your order has been placed.
+
+-- Email + SMS --
+[Email] To: alice@example.com | Message: Your order has been shipped.
+[SMS] To: +55 44 99999-0000 | Message: Your order has been shipped.
+
+-- Email + SMS + Slack --
+[Email] To: alice@example.com | Message: Payment confirmed.
+[SMS] To: +55 44 99999-0000 | Message: Payment confirmed.
+[Slack] Channel: #alerts | Message: Payment confirmed.
+
+-- Email + SMS + Slack + Logger --
+[Log] Sending notification: "Account login detected."
+[Email] To: alice@example.com | Message: Account login detected.
+[SMS] To: +55 44 99999-0000 | Message: Account login detected.
+[Slack] Channel: #alerts | Message: Account login detected.
+[Log] Notification sent.
+```
