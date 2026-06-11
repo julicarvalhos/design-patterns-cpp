@@ -84,7 +84,73 @@ Editor: Creating a new Spreadsheet document.
 
 ## 2. Command — Behavioral
 
-*Coming soon.*
+> Reference: https://refactoring.guru/design-patterns/command
+
+### Context
+
+A text editor application needs to support inserting and deleting text, with the ability to undo any previously executed action.
+
+### Problem
+
+Without a structured approach, undo/redo logic ends up scattered across the UI or business logic, tightly coupling operations to their execution context. Adding new operations or extending undo behavior becomes increasingly difficult and error-prone.
+
+### Solution
+
+The Command pattern encapsulates each action (insert, delete) as an object implementing a common `Command` interface with `execute()` and `undo()` methods. An `Invoker` (`CommandHistory`) stores executed commands in a stack and delegates undo calls to them. The client code only interacts with the invoker — it never calls editor methods directly.
+
+### Code Explanation
+
+```
+Command                 (interface)
+├── InsertCommand       → inserts text, undoes by deleting it
+└── DeleteCommand       → deletes text, undoes by restoring it
+
+TextEditor              (receiver — does the actual work)
+CommandHistory          (invoker — executes and stores commands)
+```
+
+- **`Command`** — interface declaring `execute()` and `undo()`.
+- **`InsertCommand`** — stores the content to insert; `undo()` removes it from the editor.
+- **`DeleteCommand`** — stores the deleted content before removing it; `undo()` restores it.
+- **`TextEditor`** — the receiver that directly manipulates the text string.
+- **`CommandHistory`** — the invoker that calls `execute()` on commands and maintains a stack for undo operations.
+
+### How to run
+
+```bash
+g++ -o command behavioral/command/command.cpp
+./command
+```
+
+### Expected output
+
+```
+=== Command Pattern Demo ===
+
+-- Executing commands --
+[Editor] Inserted: "Hello, "
+[Editor] Inserted: "World!"
+Current text: "Hello, World!"
+
+[Editor] Deleted: "World!"
+Current text: "Hello, "
+
+-- Undoing commands --
+[Editor] Restored: "World!"
+[Undo] Restored: "World!"
+Current text: "Hello, World!"
+
+[Undo] Reverted insert of: "World!"
+[Editor] Deleted: "World!"
+Current text: "Hello, "
+
+[Undo] Reverted insert of: "Hello, "
+[Editor] Deleted: "Hello, "
+Current text: ""
+
+[Undo] Nothing to undo.
+Current text: ""
+```
 
 ---
 
